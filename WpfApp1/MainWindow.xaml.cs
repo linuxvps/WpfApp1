@@ -1,48 +1,95 @@
-﻿using System.Net.Http;
+﻿using System;
+using System.Collections.Generic;
+using System.Net.Http;
+using System.Text.Json;
+using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Media.Imaging;
+using System.IO;
 
 namespace WpfApp1
 {
     public partial class MainWindow : Window
     {
+        private static readonly HttpClient client = new HttpClient();
+
         public MainWindow()
         {
             InitializeComponent();
         }
 
-        // Event handler برای کلیک روی دکمه
-        private async void FetchDataButton_Click(object sender, RoutedEventArgs e)
+        private async void LoadDataButton_Click(object sender, RoutedEventArgs e)
         {
             try
             {
-                // فراخوانی تابع FetchStudentsAsync برای دریافت داده‌ها از API
-                var result = await FetchStudentsAsync();
-                ResultTextBox.Text = result; // نمایش نتیجه در TextBox
-            }
-            catch (Exception ex)
-            {
-                ResultTextBox.Text = $"Error: {ex.Message}";
-            }
-        }
-
-        // تابعی برای فراخوانی API و دریافت داده‌ها
-        private async Task<string> FetchStudentsAsync()
-        {
-            using (HttpClient client = new HttpClient())
-            {
                 // ارسال درخواست GET به API
-                HttpResponseMessage response = await client.GetAsync("http://localhost:1234/api/students");
+                string url = "http://localhost:6666/api/predictions";
+                HttpResponseMessage response = await client.GetAsync(url);
 
-                // بررسی اینکه آیا درخواست موفقیت‌آمیز بوده است
                 if (response.IsSuccessStatusCode)
                 {
-                    // خواندن محتوای پاسخ به عنوان یک رشته
-                    return await response.Content.ReadAsStringAsync();
+                    string jsonString = await response.Content.ReadAsStringAsync();
+
+                    // چاپ پاسخ JSON در کنسول برای بررسی
+                    Console.WriteLine(jsonString);
+                    var options = new JsonSerializerOptions
+                    {
+                        PropertyNamingPolicy = JsonNamingPolicy.CamelCase // یا هر تنظیم دیگری که مناسب است
+                    };
+
+                    var predictionResponse = JsonSerializer.Deserialize<PredictionAndPlotResponse>(jsonString, options);
+
+                    // افزودن داده‌های پیش‌بینی به ListView
+                    PredictionsListView.ItemsSource = predictionResponse.Predictions;
+
+                    // تبدیل تصویر Base64 به Bitmap و نمایش آن در UI
+                    if (!string.IsNullOrEmpty(predictionResponse.PlotImage))
+                    {
+                        DisplayPlot(predictionResponse.PlotImage);
+                    }
+                    else
+                    {
+                        MessageBox.Show("Plot image is empty.");
+                    }
                 }
                 else
                 {
-                    throw new Exception("Failed to fetch students data");
+                    MessageBox.Show($"Failed to load predictions. Status Code: {response.StatusCode}");
                 }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error: {ex.Message}");
+            }
+        }
+
+        private void DisplayPlot(string base64Image)
+        {
+            try
+            {
+                // حذف prefix از Base64 string (data:image/png;base64,)
+                string base64Data = base64Image.Split(',')[1];
+                byte[] binaryData = Convert.FromBase64String(base64Data);
+
+                using (var ms = new MemoryStream(binaryData))
+                {
+                    var image = new BitmapImage();
+                    image.BeginInit();
+                    image.StreamSource = ms;
+                    image.CacheOption = BitmapCacheOption.OnLoad;
+                    image.EndInit();
+
+                    // نمایش تصویر در کنترل Image
+                    ChartImage.Source = image;
+                }
+            }
+            catch (FormatException ex)
+            {
+                MessageBox.Show($"Error in image format: {ex.Message}");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error displaying plot: {ex.Message}");
             }
         }
     }

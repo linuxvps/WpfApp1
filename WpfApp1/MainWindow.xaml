@@ -5,11 +5,46 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:WpfApp1"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
+        Title="Predictions Viewer" Height="600" Width="1000">
+
     <Grid>
-        <Button x:Name="FetchDataButton" Content="Fetch Students" Width="200" Height="50" VerticalAlignment="Top"
-                HorizontalAlignment="Center" Click="FetchDataButton_Click" />
-        <TextBox x:Name="ResultTextBox" VerticalAlignment="Bottom" Height="300" Width="500"
-                 HorizontalAlignment="Center" TextWrapping="Wrap" AcceptsReturn="True" />
+        <!-- عنوان اصلی -->
+        <TextBlock Text="Predictions and Actual Cash Values" 
+                   FontSize="24" 
+                   FontWeight="Bold" 
+                   HorizontalAlignment="Center" 
+                   Margin="10"/>
+        
+        <!-- لیست برای نمایش پیش‌بینی‌ها -->
+        <ListView x:Name="PredictionsListView" 
+                  HorizontalAlignment="Left" 
+                  Height="300" 
+                  Margin="10,50,0,0" 
+                  VerticalAlignment="Top" 
+                  Width="450">
+            <ListView.View>
+                <GridView>
+                    <GridViewColumn Header="Actual Cash" DisplayMemberBinding="{Binding ActualCash}" Width="200"/>
+                    <GridViewColumn Header="Predicted Cash" DisplayMemberBinding="{Binding PredictedCash}" Width="200"/>
+                </GridView>
+            </ListView.View>
+        </ListView>
+
+        <!-- تصویر نمودار -->
+        <Image x:Name="ChartImage" 
+               HorizontalAlignment="Right" 
+               Height="300" 
+               Margin="0,50,10,0" 
+               VerticalAlignment="Top" 
+               Width="450" />
+
+        <!-- دکمه برای بارگذاری داده‌ها -->
+        <Button x:Name="LoadDataButton" 
+                Content="Load Predictions" 
+                HorizontalAlignment="Center" 
+                VerticalAlignment="Bottom" 
+                Width="150" 
+                Height="40" 
+                Click="LoadDataButton_Click"/>
     </Grid>
 </Window>
