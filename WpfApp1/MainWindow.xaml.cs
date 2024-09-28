@@ -1,23 +1,49 @@
-﻿using System.Text;
+﻿using System.Net.Http;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 
-namespace WpfApp1;
-
-/// <summary>
-/// Interaction logic for MainWindow.xaml
-/// </summary>
-public partial class MainWindow : Window
+namespace WpfApp1
 {
-    public MainWindow()
+    public partial class MainWindow : Window
     {
-        InitializeComponent();
+        public MainWindow()
+        {
+            InitializeComponent();
+        }
+
+        // Event handler برای کلیک روی دکمه
+        private async void FetchDataButton_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                // فراخوانی تابع FetchStudentsAsync برای دریافت داده‌ها از API
+                var result = await FetchStudentsAsync();
+                ResultTextBox.Text = result; // نمایش نتیجه در TextBox
+            }
+            catch (Exception ex)
+            {
+                ResultTextBox.Text = $"Error: {ex.Message}";
+            }
+        }
+
+        // تابعی برای فراخوانی API و دریافت داده‌ها
+        private async Task<string> FetchStudentsAsync()
+        {
+            using (HttpClient client = new HttpClient())
+            {
+                // ارسال درخواست GET به API
+                HttpResponseMessage response = await client.GetAsync("http://localhost:1234/api/students");
+
+                // بررسی اینکه آیا درخواست موفقیت‌آمیز بوده است
+                if (response.IsSuccessStatusCode)
+                {
+                    // خواندن محتوای پاسخ به عنوان یک رشته
+                    return await response.Content.ReadAsStringAsync();
+                }
+                else
+                {
+                    throw new Exception("Failed to fetch students data");
+                }
+            }
+        }
     }
 }
